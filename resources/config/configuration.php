@@ -5,7 +5,12 @@ return [
         'required' => true,
         'type'     => 'anomaly.field_type.select',
         'config'   => [
-            //'options' => \Usps\Entity\Service::getServices(),
+            'options' => [
+                'parcel'      => 'Parcel',
+                'express'     => 'Express',
+                'priority'    => 'Priority',
+                'first_class' => 'First Class',
+            ],
         ],
     ],
 ];

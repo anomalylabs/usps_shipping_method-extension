@@ -38,10 +38,6 @@ class GetRate
      */
     public function handle(Repository $config)
     {
-        return new Rate(
-            $config->get('anomaly.extension.usps_shipping_method::config.access_key'),
-            $config->get('anomaly.extension.usps_shipping_method::config.username'),
-            $config->get('anomaly.extension.usps_shipping_method::config.password')
-        );
+        new Rate($config->get('anomaly.extension.usps_shipping_method::config.username'));
     }
 }

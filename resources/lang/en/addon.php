@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title'       => 'Usps Shipping Method',
-    'name'        => 'Usps Shipping Method Extension',
-    'description' => ''
+    'title'       => 'USPS Shipping Method',
+    'name'        => 'USPS Shipping Method Extension',
+    'description' => 'Dynamically generate shipping rates using your USPS account.'
 ];
