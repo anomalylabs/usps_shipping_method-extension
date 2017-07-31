@@ -1,0 +1,12 @@
+{
+    "name": "anomaly/usps_shipping_method-extension",
+    "type": "streams-addon",
+    "require": {
+        "vinceg/usps-php-api": "~1.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Anomaly\\UspsShippingMethodExtension\\": "src/"
+        }
+    }
+}
