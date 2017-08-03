@@ -1,7 +1,7 @@
 <?php namespace Anomaly\UspsShippingMethodExtension\Command;
 
 use Illuminate\Contracts\Config\Repository;
-use Usps\Rate;
+use USPS\Rate;
 
 /**
  * Class GetRate
