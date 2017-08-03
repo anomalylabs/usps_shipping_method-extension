@@ -1,8 +1,9 @@
 <?php namespace Anomaly\UspsShippingMethodExtension\Command;
 
 use Anomaly\ConfigurationModule\Configuration\Contract\ConfigurationRepositoryInterface;
-use Anomaly\OrdersModule\Order\Contract\OrderInterface;
 use Anomaly\ShippingModule\Method\Extension\MethodExtension;
+use Anomaly\StoreModule\Contract\AddressInterface;
+use Anomaly\StoreModule\Contract\ShippableInterface;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Usps\Entity\Address;
 use Usps\Entity\Dimensions;
@@ -15,6 +16,7 @@ use Usps\Entity\ShipFrom;
 use Usps\Entity\Shipment;
 use Usps\Entity\UnitOfMeasurement;
 use Usps\Rate;
+use USPS\RatePackage;
 
 /**
  * Class GetQuote
@@ -30,13 +32,6 @@ class GetQuote
     use DispatchesJobs;
 
     /**
-     * The order interface.
-     *
-     * @var OrderInterface
-     */
-    protected $order;
-
-    /**
      * The shipping extension.
      *
      * @var MethodExtension
@@ -44,15 +39,31 @@ class GetQuote
     protected $extension;
 
     /**
+     * The shippable interface.
+     *
+     * @var ShippableInterface
+     */
+    protected $shippable;
+
+    /**
+     * The address interface.
+     *
+     * @var AddressInterface
+     */
+    protected $address;
+
+    /**
      * Create a new GetQuote instance.
      *
      * @param MethodExtension $extension
-     * @param OrderInterface  $order
+     * @param ShippableInterface $shippable
+     * @param AddressInterface $address
      */
-    public function __construct(MethodExtension $extension, OrderInterface $order)
+    public function __construct(MethodExtension $extension, ShippableInterface $shippable, AddressInterface $address)
     {
-        $this->order     = $order;
         $this->extension = $extension;
+        $this->shippable = $shippable;
+        $this->address   = $address;
     }
 
     /**
@@ -62,75 +73,31 @@ class GetQuote
      */
     public function handle(ConfigurationRepositoryInterface $configuration)
     {
-        $method = $this->order->getShippingMethod();
+        $method = $this->extension->getMethod();
 
         /* @var Rate $rate */
         $rate = $this->dispatch(new GetRate($method));
 
-        $code = $configuration->value('anomaly.extension.usps_shipping_method::service', $method->getSlug());
+        // What service do we want to use? @todo
+        $code = $configuration->value('anomaly.extension.usps_shipping_method::service', $method->getId());
 
-        $shipment = new Shipment();
+        $package = new RatePackage();
+        $package->setService(RatePackage::SERVICE_FIRST_CLASS);
+        $package->setFirstClassMailType(RatePackage::MAIL_TYPE_LETTER);
+        $package->setZipOrigination(61241);
+        $package->setZipDestination($this->address->getPostalCode());
+        $package->setPounds($this->shippable->getShippableWeight());
+        $package->setOunces(0);
+        $package->setContainer('');
+        $package->setSize(RatePackage::SIZE_REGULAR);
+        $package->setField('Machinable', true);
 
-        /**
-         * Set the shipping service.
-         */
-        $service = new Service();
-        $service->setCode($code);
+        // add the package to the rate stack
+        $rate->addPackage($package);
 
-        $shipment->setService($service);
-
-        /**
-         * Set the shipper's information.
-         */
-        $shipperAddress = $shipment
-            ->getShipper()
-            ->getAddress();
-        $shipperAddress->setPostalCode('61241');
-
-        /**
-         * Set the origin information.
-         */
-        $fromAddress = new Address();
-        $fromAddress->setPostalCode('61241');
-        $shipFrom = new ShipFrom();
-        $shipFrom->setAddress($fromAddress);
-
-        $shipment->setShipFrom($shipFrom);
-
-        /**
-         * Set the destination information.
-         */
-        $shipTo = $shipment->getShipTo();
-        $shipTo->setCompanyName('Test Ship To');
-        $shipToAddress = $shipTo->getAddress();
-        $shipToAddress->setPostalCode('99205');
-
-        /**
-         * Add a package to the shipment.
-         */
-        $package = new Package();
-        $package->getPackagingType()->setCode(PackagingType::PT_PACKAGE);
-        $package->getPackageWeight()->setWeight(10);
-
-        $dimensions = new Dimensions();
-        $dimensions->setHeight(10);
-        $dimensions->setWidth(10);
-        $dimensions->setLength(10);
-
-        $unit = new UnitOfMeasurement();
-        $unit->setCode(UnitOfMeasurement::UOM_IN);
-
-        $dimensions->setUnitOfMeasurement($unit);
-        $package->setDimensions($dimensions);
-
-        $shipment->addPackage($package);
-
-        /* @var RateResponse $response */
-        $response = $rate->getRate($shipment);
-
-        /* @var RatedShipment $quote */
-        $quote = $response->RatedShipment[0];
-
-        return $quote->TotalCharges->MonetaryValue;
+        // Perform the request and print out the result
+        dd($rate->getRate());
+        print_r($rate->getRate());
+        print_r($rate->getArrayResponse());
     }
 }

@@ -1,7 +1,7 @@
 <?php namespace Anomaly\UspsShippingMethodExtension;
 
-use Anomaly\OrdersModule\Order\Contract\OrderInterface;
 use Anomaly\ShippingModule\Method\Extension\MethodExtension;
+use Anomaly\StoreModule\Contract\AddressInterface;
 use Anomaly\StoreModule\Contract\ShippableInterface;
 use Anomaly\UspsShippingMethodExtension\Command\GetQuote;
 
@@ -27,11 +27,11 @@ class UspsShippingMethodExtension extends MethodExtension
      * Return a quote for an order.
      *
      * @param ShippableInterface $shippable
-     * @param array              $parameters
+     * @param array $parameters
      * @return float
      */
-    public function quote(ShippableInterface $shippable, array $parameters = [])
+    public function quote(ShippableInterface $shippable, AddressInterface $address)
     {
-        return $this->dispatch(new GetQuote($this, $shippable));
+        return $this->dispatch(new GetQuote($this, $shippable, $address));
     }
 }
