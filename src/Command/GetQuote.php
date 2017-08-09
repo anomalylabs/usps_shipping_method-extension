@@ -78,7 +78,7 @@ class GetQuote
         $package->setFirstClassMailType(RatePackage::CONTAINER_FLAT_RATE_BOX);
         $package->setZipOrigination(10001);
         $package->setZipDestination($this->address->getPostalCode());
-        $package->setPounds(array_shift($weight));
+        $package->setPounds(array_shift($weight) ?: 1);
         $package->setOunces(($ounces = array_shift($weight)) ? ($ounces / 16) : 0);
         $package->setContainer('');
         $package->setSize(RatePackage::SIZE_REGULAR);
